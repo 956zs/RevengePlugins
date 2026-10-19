@@ -1,8 +1,4 @@
 {
-	"status": "broken",
-	"usable": true,
-	"reason": {
-		"cause": "Broken due to",
-		"reason": "Iconpacks broken by React Native function components"
-	}
+	"status": "unfinished",
+	"usable": true
 }
