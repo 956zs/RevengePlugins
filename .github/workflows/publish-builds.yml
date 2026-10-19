@@ -1,0 +1,44 @@
+name: Publish builds branch
+
+on:
+    push:
+        branches:
+            - main
+        paths:
+            - src/**/*.*
+            - .github/workflows/publish-builds.yml
+    workflow_dispatch:
+
+concurrency:
+    group: ${{ github.workflow }}
+    cancel-in-progress: true
+
+jobs:
+    publish:
+        runs-on: ubuntu-latest
+        permissions:
+            contents: write
+
+        steps:
+            - name: checkout
+              uses: actions/checkout@v4
+
+            - name: setup workspace
+              uses: ./.github/actions/setup
+              with:
+                  setup-dprint: true
+
+            - name: build plugins
+              run: pnpm build
+
+            # plugins can be installed from https://raw.githubusercontent.com/<repo>/builds/<plugin>/
+            - name: push builds branch
+              env:
+                  GH_TOKEN: ${{ github.token }}
+              run: |
+                  cd dist
+                  git init -q -b builds
+                  git add -A
+                  git commit -q -m "build: $GITHUB_SHA"
+                  git push -f "https://x-access-token:$GH_TOKEN@github.com/$GITHUB_REPOSITORY.git" builds
+              shell: bash
