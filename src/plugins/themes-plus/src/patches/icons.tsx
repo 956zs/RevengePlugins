@@ -21,7 +21,14 @@ const Image = findByProps(
 	"getSize",
 	"prefetch",
 	"resolveAssetSource",
-) as unknown as (props: any) => React.ReactElement;
+) as unknown as {
+	(props: any): React.ReactElement;
+	resolveAssetSource: {
+		addCustomSourceTransformer: (transformer: (resolver: any) => any) => void;
+	};
+};
+// transformers can't be removed, so only one gets added and it calls whatever is stored here
+const assetTransformer = Symbol.for("themes-plus asset transformer");
 
 export default function patchIcons(
 	plus: PlusStructure,
@@ -48,6 +55,18 @@ export default function patchIcons(
 			state.patches.push(PatchType.CustomIconOverlays);
 		}
 		if (iconpack) state.patches.push(PatchType.Iconpack);
+
+		const getIconpackLocation = (asset: BunnyAsset) => {
+			if (!iconpack) return;
+
+			const location = fixPath(
+				[
+					...asset.httpServerLocation.split("/").slice(2),
+					`${asset.name}${iconpack.suffix}.${asset.type}`,
+				].join("/"),
+			);
+			if (!tree.length || tree.includes(location)) return location;
+		};
 
 		// elements created before unpatching keep this component, so it has to fall back to Image
 		let active = true;
@@ -100,15 +119,8 @@ export default function patchIcons(
 
 			if (!asset?.httpServerLocation) return Image(props);
 
-			const assetIconpackLocation = iconpack
-				&& fixPath(
-					[
-						...asset.httpServerLocation.split("/").slice(2),
-						`${asset.name}${iconpack.suffix}.${asset.type}`,
-					].join("/"),
-				);
-			const useIconpack = assetIconpackLocation
-				&& (tree.length ? tree.includes(assetIconpackLocation) : true);
+			const assetIconpackLocation = getIconpackLocation(asset);
+			const useIconpack = iconpack && assetIconpackLocation;
 
 			let overlay: any;
 			if (
@@ -181,5 +193,31 @@ export default function patchIcons(
 				active = false;
 			},
 		);
+
+		// components that keep their own reference to jsx (like Discord's Icon) still create plain Image elements,
+		// so iconpack icons also get swapped in when their asset gets resolved
+		if (iconpack && Image?.resolveAssetSource) {
+			if (!(assetTransformer in window)) {
+				Image.resolveAssetSource.addCustomSourceTransformer(resolver =>
+					window[assetTransformer]?.(resolver)
+				);
+			}
+
+			window[assetTransformer] = (resolver: any) => {
+				const { asset } = resolver;
+				const location = asset?.httpServerLocation && getIconpackLocation(asset);
+				if (!location) return null;
+
+				return {
+					uri: iconpack.load + location,
+					width: asset.width,
+					height: asset.height,
+					scale: 1,
+				};
+			};
+			patches.push(() => {
+				window[assetTransformer] = undefined;
+			});
+		}
 	}
 }
