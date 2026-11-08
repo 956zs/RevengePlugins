@@ -12,6 +12,7 @@ import {
 	flagTime,
 	guildName,
 	leaveFocus,
+	lockedElsewhere,
 	pendingCount,
 	refreshFlag,
 	toggleExcluded,
@@ -30,7 +31,9 @@ export default () => {
 
 	const j = vstorage.journal;
 	const elsewhere = flagElsewhere();
-	const focus = j.profile === "focus" || elsewhere != null;
+	// A shared journal can be restored from here; a v1 flag only on its own device
+	const locked = lockedElsewhere();
+	const focus = j.profile === "focus" || vstorage.flag != null;
 	const f = vstorage.failed;
 	const failedCount = f.guilds.length + f.channels.length;
 	const leftovers = focus ? pendingCount(j) : 0;
@@ -40,8 +43,10 @@ export default () => {
 			<FormSection title={vstorage.busy ? "模式（處理中…）" : "模式"}>
 				<FormRow
 					label="一般模式"
-					subLabel={elsewhere
+					subLabel={locked && elsewhere
 						? `要在${deviceName(elsewhere.label)}切回`
+						: elsewhere
+						? `在這裡還原${deviceName(elsewhere.label)}開的專注模式`
 						: focus
 						? "把專注模式改過的設定還原"
 						: "照 Discord 原本的通知設定"}
@@ -67,7 +72,7 @@ export default () => {
 						subLabel="切回一般模式只會還原這些"
 					/>
 				)}
-				{elsewhere && (
+				{elsewhere && (locked || vstorage.journalLost) && (
 					<FormRow
 						label="清除同步旗標"
 						subLabel={`只有${deviceName(elsewhere.label)}的資料不見時才需要；不會改任何通知設定`}
