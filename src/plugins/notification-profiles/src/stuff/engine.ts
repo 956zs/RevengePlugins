@@ -45,7 +45,7 @@ export const GUILD_BATCH = 25;
 export const DM_BATCH = 50;
 export const ATTEMPTS = 4;
 
-async function withRetry<T>(fn: () => Promise<T>, deps: Deps): Promise<T> {
+export async function withRetry<T>(fn: () => Promise<T>, deps: Pick<Deps, "sleep">): Promise<T> {
 	for (let attempt = 0;; attempt++) {
 		try {
 			return await fn();
