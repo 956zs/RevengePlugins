@@ -1,0 +1,1 @@
+{"name":"Notification Profiles","description":"通知設定檔：專注模式只通知白名單的私訊，伺服器和其他私訊全部不通知；切回一般模式精準還原","authors":[{"name":"nlcat","id":"586502118530351114"}],"main":"index.js","vendetta":{"icon":"BellIcon"},"hash":"50e761a705143f34d7622edf826efaac82e138c8f8553eec3daf365b0b202ca1"}
