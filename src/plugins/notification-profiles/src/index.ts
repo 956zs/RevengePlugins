@@ -4,7 +4,15 @@ import { getAssetIDByName } from "@vendetta/ui/assets";
 import { showToast } from "@vendetta/ui/toasts";
 
 import Settings from "./components/Settings";
-import { enterFocus, guildName, initStorage, leaveFocus, subscribe, toggleExcluded, toggleWhitelist } from "./stuff/core";
+import {
+	enterFocus,
+	guildName,
+	initStorage,
+	leaveFocus,
+	subscribe,
+	toggleExcluded,
+	toggleWhitelist,
+} from "./stuff/core";
 
 const UserStore = findByStoreName("UserStore");
 

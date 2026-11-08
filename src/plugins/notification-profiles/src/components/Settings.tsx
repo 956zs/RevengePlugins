@@ -61,7 +61,9 @@ export default () => {
 				/>
 				{j.profile === "focus" && (
 					<FormRow
-						label={`專注模式改了 ${Object.keys(j.guilds).length} 個伺服器、${Object.keys(j.channels).length} 個私訊`}
+						label={`專注模式改了 ${Object.keys(j.guilds).length} 個伺服器、${
+							Object.keys(j.channels).length
+						} 個私訊`}
 						subLabel="切回一般模式只會還原這些"
 					/>
 				)}
@@ -107,9 +109,16 @@ export default () => {
 			</FormSection>
 
 			<FormSection title="不會動的伺服器（點一下移除）">
-				{vstorage.excluded.length === 0 && <FormRow label="沒有" subLabel="在伺服器的頻道輸入 /專注排除" />}
+				{vstorage.excluded.length === 0 && (
+					<FormRow label="沒有" subLabel="在伺服器的頻道輸入 /專注排除" />
+				)}
 				{vstorage.excluded.map(id => (
-					<FormRow key={id} label={guildName(id)} leading={icon("ServerIcon")} onPress={() => toggleExcluded(id)} />
+					<FormRow
+						key={id}
+						label={guildName(id)}
+						leading={icon("ServerIcon")}
+						onPress={() => toggleExcluded(id)}
+					/>
 				))}
 			</FormSection>
 

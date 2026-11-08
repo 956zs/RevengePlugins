@@ -5,7 +5,15 @@ import { getAssetIDByName } from "@vendetta/ui/assets";
 import { showToast } from "@vendetta/ui/toasts";
 
 import { applyJournal, type Deps, HttpError, restoreJournal } from "./engine";
-import { canEnter, canLeave, type Decision, encodeFlag, type Flag, newDeviceId, parseFlag } from "./flag";
+import {
+	canEnter,
+	canLeave,
+	type Decision,
+	encodeFlag,
+	type Flag,
+	newDeviceId,
+	parseFlag,
+} from "./flag";
 import {
 	type DmInfo,
 	type DmPrefs,
@@ -97,7 +105,12 @@ async function patch(url: string, body: object) {
 		const res = await HTTP.patch({ url, body });
 		return res?.body;
 	} catch (e: any) {
-		console.warn("[NotificationProfiles] PATCH", url, e?.status, JSON.stringify(e?.body ?? e?.message ?? e).slice(0, 500));
+		console.warn(
+			"[NotificationProfiles] PATCH",
+			url,
+			e?.status,
+			JSON.stringify(e?.body ?? e?.message ?? e).slice(0, 500),
+		);
 		throw new HttpError(typeof e?.status === "number" ? e.status : undefined, e?.body?.retry_after);
 	}
 }
@@ -112,7 +125,11 @@ const deps: Deps = {
 	},
 	async patchDms(overrides) {
 		const body = await patch("/users/@me/guilds/@me/settings", { channel_overrides: overrides });
-		FluxDispatcher.dispatch({ type: "USER_GUILD_SETTINGS_CHANNEL_UPDATE_BULK", guildId: null, overrides });
+		FluxDispatcher.dispatch({
+			type: "USER_GUILD_SETTINGS_CHANNEL_UPDATE_BULK",
+			guildId: null,
+			overrides,
+		});
 		return body;
 	},
 	currentGuild,
@@ -136,8 +153,10 @@ function storesLookStale(j: Journal) {
 
 // ---------- cross-device flag ----------
 
-export const deviceName = (label: string) => ({ desktop: "電腦", phone: "手機" } as Record<string, string>)[label] ?? label;
-export const flagTime = (f: Flag) => new Date(f.at).toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit" });
+export const deviceName = (label: string) =>
+	({ desktop: "電腦", phone: "手機" } as Record<string, string>)[label] ?? label;
+export const flagTime = (f: Flag) =>
+	new Date(f.at).toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit" });
 const noteUrl = () => `/users/@me/notes/${UserStore.getCurrentUser().id}`;
 
 async function readNote(): Promise<string | null> {
@@ -175,10 +194,12 @@ export async function refreshFlag() {
 export const flagElsewhere = () =>
 	vstorage.flag && vstorage.flag.device !== vstorage.deviceId ? vstorage.flag : null;
 
-function refuse(d: Exclude<Decision, { ok: true; }>) {
+function refuse(d: Exclude<Decision, { ok: true }>) {
 	toast(
 		d.reason === "otherDevice"
-			? `專注模式是${deviceName(d.flag.label)}在 ${flagTime(d.flag)} 開的，請到那台切換。那台資料不見的話，可以在設定清除同步旗標`
+			? `專注模式是${deviceName(d.flag.label)}在 ${
+				flagTime(d.flag)
+			} 開的，請到那台切換。那台資料不見的話，可以在設定清除同步旗標`
 			: "你自己帳號的備註已經有別的內容，為了不蓋掉它，同步旗標用不了",
 		false,
 	);
@@ -207,7 +228,11 @@ async function run(task: () => Promise<void>) {
 }
 
 function report(kind: "focus" | "normal", r: Awaited<ReturnType<typeof applyJournal>>) {
-	vstorage.failed = { guilds: r.guilds.failed, channels: r.channels.failed, restoring: kind === "normal" };
+	vstorage.failed = {
+		guilds: r.guilds.failed,
+		channels: r.channels.failed,
+		restoring: kind === "normal",
+	};
 	if (!r.guilds.failed.length && !r.channels.failed.length) {
 		toast(
 			kind === "focus"
@@ -232,7 +257,11 @@ export const enterFocus = () =>
 		if (!d.ok) return refuse(d);
 		// Claim Focus for this device before changing anything
 		if (!parseFlag(note)) {
-			vstorage.flag = { device: vstorage.deviceId, label: DEVICE_LABEL, at: new Date().toISOString() };
+			vstorage.flag = {
+				device: vstorage.deviceId,
+				label: DEVICE_LABEL,
+				at: new Date().toISOString(),
+			};
 			await writeNote(encodeFlag(vstorage.flag));
 		}
 		let j = clone(vstorage.journal);
@@ -244,7 +273,9 @@ export const enterFocus = () =>
 			}
 			j = planFocus({
 				guilds,
-				dms: privateChannels().map(info => ({ info, prefs: currentDm(info.id)! })).filter(d => d.prefs),
+				dms: privateChannels().map(info => ({ info, prefs: currentDm(info.id)! })).filter(d =>
+					d.prefs
+				),
 				whitelist: new Set(vstorage.whitelist),
 				excludedGuilds: new Set(vstorage.excluded),
 				muteServers: vstorage.muteServers,
@@ -299,7 +330,14 @@ async function syncItems(guildIds: string[], channelIds: string[]) {
 		} else if (vstorage.muteServers && !j.guilds[id]) {
 			Object.assign(
 				add.guilds,
-				planFocus({ guilds: { [id]: cur }, dms: [], whitelist: wl, excludedGuilds: ex, muteServers: true, muteGroupDMs: true })
+				planFocus({
+					guilds: { [id]: cur },
+					dms: [],
+					whitelist: wl,
+					excludedGuilds: ex,
+					muteServers: true,
+					muteGroupDMs: true,
+				})
 					.guilds,
 			);
 		}
@@ -346,7 +384,9 @@ const quiet = (p: Promise<void>) => p.catch(e => console.error("[NotificationPro
 
 export function toggleWhitelist(userId: string) {
 	const listed = vstorage.whitelist.includes(userId);
-	vstorage.whitelist = listed ? vstorage.whitelist.filter(id => id !== userId) : [...vstorage.whitelist, userId];
+	vstorage.whitelist = listed
+		? vstorage.whitelist.filter(id => id !== userId)
+		: [...vstorage.whitelist, userId];
 	const dmId = ChannelStore.getDMFromUserId(userId);
 	if (dmId) quiet(syncItems([], [dmId]));
 	return !listed;
@@ -354,17 +394,19 @@ export function toggleWhitelist(userId: string) {
 
 export function toggleExcluded(guildId: string) {
 	const listed = vstorage.excluded.includes(guildId);
-	vstorage.excluded = listed ? vstorage.excluded.filter(id => id !== guildId) : [...vstorage.excluded, guildId];
+	vstorage.excluded = listed
+		? vstorage.excluded.filter(id => id !== guildId)
+		: [...vstorage.excluded, guildId];
 	quiet(syncItems([guildId], []));
 	return !listed;
 }
 
 // Another device changed the flag: Discord pushes note updates to every session
-function onNoteUpdate({ id, note }: { id?: string; note?: string; }) {
+function onNoteUpdate({ id, note }: { id?: string; note?: string }) {
 	if (id === UserStore.getCurrentUser()?.id) setFlag(parseFlag(note));
 }
 
-function onChannelCreate({ channel }: { channel?: { id: string; }; }) {
+function onChannelCreate({ channel }: { channel?: { id: string } }) {
 	if (channel) quiet(syncItems([], [channel.id]));
 }
 
